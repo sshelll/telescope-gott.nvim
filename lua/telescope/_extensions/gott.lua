@@ -68,7 +68,7 @@ local main = function(opts)
         finder = finders.new_table {
             results = go_tests,
         },
-        previewer = conf.grep_previewer({}),
+        previewer = conf.grep_previewer(opts),
         sorter = conf.generic_sorter(opts),
     }):find()
 end
