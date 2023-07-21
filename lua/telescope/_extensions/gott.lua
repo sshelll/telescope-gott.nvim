@@ -1,3 +1,31 @@
+-- Copyright (c) 2023 sshelll, the telescope-gott.nvim authors. All rights reserved
+--
+-- Redistribution and use in source and binary forms, with or without
+-- modification, are permitted provided that the following conditions are
+-- met
+--
+--    * Redistributions of source code must retain the above copyright
+-- notice, this list of conditions and the following disclaimer.
+--    * Redistributions in binary form must reproduce the above
+-- copyright notice, this list of conditions and the following disclaimer
+-- in the documentation and/or other materials provided with the
+-- distribution.
+--    * Neither the name of Google Inc. nor the names of its
+-- contributors may be used to endorse or promote products derived from
+-- this software without specific prior written permission
+--
+-- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+-- "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+-- LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+-- A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+-- OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+-- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+-- LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+-- DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+-- THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+-- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 local pickers = require "telescope.pickers"
 local finders = require "telescope.finders"
 local conf = require("telescope.config").values
@@ -36,7 +64,6 @@ util.exec = function(cmd, notify, opts)
             title = string.format("gott: %s", opts.title or ""),
             render = opts.render or "default",
             icon = "",
-            timeout = opts.timeout or 5000,
             keep = opts.keep or function() return true end,
         }
     )
@@ -69,12 +96,19 @@ end
 
 local run_gotest_by_file = function ()
     local file = vim.fn.expand("%:p")
+    local filename = vim.fn.expand("%:t")
     local gotest_cmd = string.format("!gott -file=%s -v", file)
-    util.exec(gotest_cmd, true, { title = string.format("Test all of %s", file) })
+    util.exec(gotest_cmd, true, { title = string.format("Test all of %s", filename) })
 end
 
 local main = function(opts)
     local current_file_path = vim.fn.expand("%:p")
+    -- check if current file is go test file
+    if not string.match(current_file_path, "_test.go$") then
+        print("telescope-gott: current file is not go test file")
+        return
+    end
+
     local go_tests = get_test_list_from_file(current_file_path)
     local test_all = "→ Test All"
 
