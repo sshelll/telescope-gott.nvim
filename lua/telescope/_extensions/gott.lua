@@ -1,6 +1,8 @@
 local pickers = require "telescope.pickers"
 local finders = require "telescope.finders"
 local conf = require("telescope.config").values
+local actions = require "telescope.actions"
+local action_state = require "telescope.actions.state"
 
 local util = {}
 
@@ -59,6 +61,13 @@ local get_test_list_from_file = function(file)
     return test_list
 end
 
+local run_gotest = function(test_name)
+    -- get current file dir, not file path
+    local dir = vim.fn.expand("%:p:h")
+    local gotest_cmd = string.format("!cd %s !go test -test.run=%s", dir, test_name)
+    util.exec(gotest_cmd, true, { title = test_name })
+end
+
 local main = function(opts)
     local current_file_path = vim.fn.expand("%:p")
     local go_tests = get_test_list_from_file(current_file_path)
@@ -72,10 +81,18 @@ local main = function(opts)
         },
         previewer = conf.grep_previewer(opts),
         sorter = conf.generic_sorter(opts),
+        attach_mappings = function(prompt_bufnr, map)
+            actions.select_default:replace(function()
+                actions.close(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                run_gotest(selection[1])
+            end)
+            return true
+        end,
     }):find()
 end
 
-return require("telescope").register_extension ({
+return require("telescope").register_extension({
     setup = function()
     end,
     exports = {
