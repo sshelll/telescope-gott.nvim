@@ -47,7 +47,7 @@ end
 
 
 local get_test_list_from_file = function(file)
-    local gott_cmd = string.format("!gott -print -file=%s -sub", file)
+    local gott_cmd = string.format("!gott -print -file=^%s$ -sub", file)
     local output = util.exec(gott_cmd, false, {})
     local test_list = {}
     local pattern = string.format("([^%s]+)", "\\|")
@@ -61,23 +61,33 @@ local get_test_list_from_file = function(file)
     return test_list
 end
 
-local run_gotest = function(test_name)
+local run_gotest_by_name = function(test_name)
     local dir = vim.fn.expand("%:p:h")
     local gotest_cmd = string.format("!cd %s && go test -v -test.run=%s", dir, test_name)
     util.exec(gotest_cmd, true, { title = test_name })
 end
 
+local run_gotest_by_file = function ()
+    local file = vim.fn.expand("%:p")
+    local gotest_cmd = string.format("!gott -file=%s -v", file)
+    util.exec(gotest_cmd, true, { title = string.format("Test all of %s", file) })
+end
+
 local main = function(opts)
     local current_file_path = vim.fn.expand("%:p")
     local go_tests = get_test_list_from_file(current_file_path)
-    opts = require("telescope.themes").get_cursor({
+    local test_all = "→ Test All"
+
+    go_tests[#go_tests + 1] = test_all
+
+    opts = require("telescope.themes").get_dropdown({
         layout_config = {
             width = 0.2,
             height = 0.4,
         },
         previewer = false,
-
     })
+
     pickers.new(opts, {
         prompt_title = "go test list",
         finder = finders.new_table {
@@ -89,7 +99,11 @@ local main = function(opts)
             actions.select_default:replace(function()
                 actions.close(prompt_bufnr)
                 local selection = action_state.get_selected_entry()
-                run_gotest(selection[1])
+                if selection[1] == test_all then
+                    run_gotest_by_file()
+                else
+                    run_gotest_by_name(selection[1])
+                end
             end)
             return true
         end,
