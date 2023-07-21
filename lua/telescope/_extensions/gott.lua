@@ -64,7 +64,7 @@ end
 local run_gotest = function(test_name)
     -- get current file dir, not file path
     local dir = vim.fn.expand("%:p:h")
-    local gotest_cmd = string.format("!cd %s !go test -test.run=%s", dir, test_name)
+    local gotest_cmd = string.format("!cd %s && !go test -v -test.run=%s", dir, test_name)
     util.exec(gotest_cmd, true, { title = test_name })
 end
 
