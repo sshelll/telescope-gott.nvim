@@ -70,7 +70,14 @@ end
 local main = function(opts)
     local current_file_path = vim.fn.expand("%:p")
     local go_tests = get_test_list_from_file(current_file_path)
-    opts = opts or {}
+    opts = require("telescope.themes").get_cursor({
+        layout_config = {
+            width = 0.4,
+            height = 0.4,
+        },
+        previewer = false,
+
+    })
     pickers.new(opts, {
         prompt_title = "go test list",
         finder = finders.new_table {
