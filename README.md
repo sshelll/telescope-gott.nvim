@@ -12,16 +12,16 @@
 
 ## Requirements
 
-1. gott@v2.x.x (required)
+1. [gott@v2.x.x](https://github.com/sshelll/gott) (required)
 
-> Use `go install github.com/sshelll/gott/v2@latest ` to install.
+> `go install github.com/sshelll/gott/v2@latest`
 
-2. telescope.nvim (required)
+2. [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) (required)
 
-> Use your plug manager to install, for example: `Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.x' }`
+> `Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.x' }`
 
-3. gott.nvim (optional, but highly recommend)
-
+3. [gott.nvim](https://github.com/sshelll/gott.nvim) (optional, but highly recommend)
+> `Plug 'sshelll/gott.nvim'`
 
 
 ## Install
