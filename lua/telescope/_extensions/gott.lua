@@ -47,7 +47,7 @@ end
 
 
 local get_test_list_from_file = function(file)
-    local gott_cmd = string.format("!gott -print -file=^%s$ -sub", file)
+    local gott_cmd = string.format("!gott -print -file=%s -sub", file)
     local output = util.exec(gott_cmd, false, {})
     local test_list = {}
     local pattern = string.format("([^%s]+)", "\\|")
@@ -63,7 +63,7 @@ end
 
 local run_gotest_by_name = function(test_name)
     local dir = vim.fn.expand("%:p:h")
-    local gotest_cmd = string.format("!cd %s && go test -v -test.run=%s", dir, test_name)
+    local gotest_cmd = string.format("!cd %s && go test -v -test.run=^%s$", dir, test_name)
     util.exec(gotest_cmd, true, { title = test_name })
 end
 
