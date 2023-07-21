@@ -57,4 +57,8 @@ require('telescope').load_extension('gott')
 
 There's similar tool to run test - [gott.nvim](https://github.com/sshelll/gott.nvim).
 
-The main difference between `gott.nvim` and `telescope-gott.nvim` is that `gott.nvim` provides a vim cmd to run the test under the cursor, while `telescope-gott.nvim` provides a interactive way to choose a go test to run.
+The differences between `gott.nvim` and `telescope-gott.nvim`:  
+1. `gott.nvim` provides a vim cmd to run the test under the cursor, while `telescope-gott.nvim` provides a interactive way to choose a go test to run.
+2. `gott.nvim` allows you to enter go test args, such as `:Gott -v -race`, while `telescope-gott.nvim` can only exec go tests with `-v` flag.
+
+And that's why I highly recommend you to install both of them 🎉!
