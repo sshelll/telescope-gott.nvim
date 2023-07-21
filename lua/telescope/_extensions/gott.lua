@@ -72,7 +72,7 @@ local main = function(opts)
     local go_tests = get_test_list_from_file(current_file_path)
     opts = require("telescope.themes").get_cursor({
         layout_config = {
-            width = 0.4,
+            width = 0.2,
             height = 0.4,
         },
         previewer = false,
