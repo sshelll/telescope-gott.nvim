@@ -62,9 +62,8 @@ local get_test_list_from_file = function(file)
 end
 
 local run_gotest = function(test_name)
-    -- get current file dir, not file path
     local dir = vim.fn.expand("%:p:h")
-    local gotest_cmd = string.format("!cd %s && !go test -v -test.run=%s", dir, test_name)
+    local gotest_cmd = string.format("!cd %s && go test -v -test.run=%s", dir, test_name)
     util.exec(gotest_cmd, true, { title = test_name })
 end
 
@@ -72,14 +71,12 @@ local main = function(opts)
     local current_file_path = vim.fn.expand("%:p")
     local go_tests = get_test_list_from_file(current_file_path)
     opts = opts or {}
-    opts.path = current_file_path
-    opts.line = 1
     pickers.new(opts, {
         prompt_title = "go test list",
         finder = finders.new_table {
             results = go_tests,
         },
-        previewer = conf.grep_previewer(opts),
+        theme = "cursor",
         sorter = conf.generic_sorter(opts),
         attach_mappings = function(prompt_bufnr, map)
             actions.select_default:replace(function()
