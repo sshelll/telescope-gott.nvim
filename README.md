@@ -42,7 +42,7 @@ require('telescope').load_extension('gott')
 
 ## Usage
 
-1. `:telescope gott` , use this command to open the test selector.
+1. `:Telescope gott` , use this command to open the test selector.
 2. `:lua require('notify').dismiss()`, use this command to clear the test result pop-up notifications.
 
 > It's recommended to make your own custom key map or cmd for the 2nd command.
