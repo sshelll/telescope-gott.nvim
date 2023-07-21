@@ -63,6 +63,8 @@ local main = function(opts)
     local current_file_path = vim.fn.expand("%:p")
     local go_tests = get_test_list_from_file(current_file_path)
     opts = opts or {}
+    opts.path = current_file_path
+    opts.line = 1
     pickers.new(opts, {
         prompt_title = "go test list",
         finder = finders.new_table {
