@@ -1,6 +1,7 @@
 # telescope-gott.nvim
 
-> A nvim go test runner based on [gott@v2.x.x](https://github.com/sshelll/gott) and [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
+> A nvim go test runner based on [gott@v2.x.x](https://github.com/sshelll/gott) and [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).  
+> This extension helps you choose and run a go test func with `telescope`.
 
 
 
@@ -38,11 +39,38 @@ use your nvim plug manager, for example:
 require('telescope').load_extension('gott')
 ```
 
+## Config
+```lua
+require('telescope').setup {
+    defaults = {
+        -- ...
+    },
+    pickers = {
+        -- ...
+    },
+    -- config telescope-gott here ⬇️
+    extensions = {
+        gott = {
+            test_args = "-v -vet=off", -- go test args
+            timeout = 3000,            -- try to close go test result notification after 3s.
+            keep = function()          -- decide whether to keep the notification after timeout(3s).
+                return false           -- you can use 'return true' to keep the notification window forever.
+            end,
+            render = 'default',        -- default / minimal / simple / compact, controls the notification style.
+            theme = 'dropdown',        -- cursor / dropdown / ivy, telescope picker theme
+            layout_config = {          -- telescope picker layout
+                width = 0.2,
+                height = 0.4,
+            },
+        },
+    }
+}
+```
 
 
 ## Usage
 
-1. `:Telescope gott` , use this command to open the test selector.
+1. `:Telescope gott`, use this command to open the test selector.
 2. `:lua require('notify').dismiss()`, use this command to clear the test result pop-up notifications.
 
 > It's recommended to make your own custom key map or cmd for the 2nd command.
@@ -59,6 +87,6 @@ There's similar tool to run test - [gott.nvim](https://github.com/sshelll/gott.n
 
 The differences between `gott.nvim` and `telescope-gott.nvim`:  
 1. `gott.nvim` provides a vim cmd to run the test under the cursor, while `telescope-gott.nvim` provides a interactive way to choose a go test to run.
-2. `gott.nvim` allows you to enter go test args, such as `:Gott -v -race`, while `telescope-gott.nvim` can only exec go tests with `-v` flag.
+2. `gott.nvim` allows you to enter go test args, such as `:Gott -v -race`, while `telescope-gott.nvim` can only exec go tests with configured args.
 
 And that's why I highly recommend you to install both of them 🎉!
