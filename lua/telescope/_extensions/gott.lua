@@ -8,6 +8,20 @@ local conf = require("telescope.config").values
 local actions = require "telescope.actions"
 local action_state = require "telescope.actions.state"
 
+local ext_opt = {
+    test_args = "-v -vet=off",
+    timeout = 3000,
+    keep = function()
+        return false
+    end,
+    render = 'default',
+    theme = 'dropdown',
+    layout_config = {
+        width = 0.2,
+        height = 0.4,
+    },
+}
+
 local util = {}
 
 util.split = function(str, sep)
@@ -37,10 +51,11 @@ util.exec = function(cmd, notify, opts)
         splited,
         vim.log.levels.INFO,
         {
-            title = string.format("gott: %s", opts.title or ""),
-            render = opts.render or "default",
             icon = "",
-            keep = opts.keep or function() return true end,
+            title = string.format("gott: %s", opts.title or ""),
+            render = ext_opt.render or "default",
+            timeout = ext_opt.timeout or 3000,
+            keep = ext_opt.keep or function() return false end,
         }
     )
     if not displayed then
@@ -66,15 +81,29 @@ end
 
 local run_gotest_by_name = function(test_name)
     local dir = vim.fn.expand("%:p:h")
-    local gotest_cmd = string.format("!cd %s && go test -v -test.run=^%s$", dir, test_name)
+    local gotest_cmd = string.format("!cd %s && go test %s -test.run=^%s$", dir, ext_opt.test_args, test_name)
     util.exec(gotest_cmd, true, { title = test_name })
 end
 
-local run_gotest_by_file = function ()
+local run_gotest_by_file = function()
     local file = vim.fn.expand("%:p")
     local filename = vim.fn.expand("%:t")
-    local gotest_cmd = string.format("!gott -file=%s -v", file)
+    local gotest_cmd = string.format("!gott -file=%s %s", file, ext_opt.test_args)
     util.exec(gotest_cmd, true, { title = string.format("Test all of %s", filename) })
+end
+
+local build_picker_opts = function()
+    local theme_conf = {
+        layout_config = ext_opt.layout_config,
+        previewer = false,
+    }
+    if ext_opt.theme == 'ivy' then
+        return require("telescope.themes").get_ivy(theme_conf)
+    elseif ext_opt.theme == 'cursor' then
+        return require("telescope.themes").get_cursor(theme_conf)
+    else
+        return require("telescope.themes").get_dropdown(theme_conf)
+    end
 end
 
 local main = function(opts)
@@ -90,14 +119,7 @@ local main = function(opts)
 
     go_tests[#go_tests + 1] = test_all
 
-    opts = require("telescope.themes").get_dropdown({
-        layout_config = {
-            width = 0.2,
-            height = 0.4,
-        },
-        previewer = false,
-    })
-
+    opts = build_picker_opts()
     pickers.new(opts, {
         prompt_title = "go test list",
         finder = finders.new_table {
@@ -121,7 +143,9 @@ local main = function(opts)
 end
 
 return require("telescope").register_extension({
-    setup = function()
+    setup = function(ext_config)
+        ext_config = ext_config or {}
+        ext_opt = vim.tbl_extend("force", ext_opt, ext_config)
     end,
     exports = {
         gott = main
