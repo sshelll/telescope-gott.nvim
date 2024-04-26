@@ -10,6 +10,10 @@ local action_state = require "telescope.actions.state"
 
 local ext_opt = {
     test_args = "-v -vet=off",
+    test_args_list = {
+        "-v",
+        '-gcflags=\"all=-l -N\" -v'
+    },
     timeout = 3000,
     keep = function()
         return false
@@ -63,8 +67,23 @@ util.exec = function(cmd, notify, opts)
     end
 end
 
+util.build_picker_opts = function()
+    local theme_conf = {
+        layout_config = ext_opt.layout_config,
+        previewer = false,
+    }
+    if ext_opt.theme == 'ivy' then
+        return require("telescope.themes").get_ivy(theme_conf)
+    elseif ext_opt.theme == 'cursor' then
+        return require("telescope.themes").get_cursor(theme_conf)
+    else
+        return require("telescope.themes").get_dropdown(theme_conf)
+    end
+end
 
-local get_test_list_from_file = function(file)
+local core = {}
+
+core.get_test_list_from_file = function(file)
     local gott_cmd = string.format("!gott -print -file=%s -sub", file)
     local output = util.exec(gott_cmd, false, {})
     local test_list = {}
@@ -79,30 +98,52 @@ local get_test_list_from_file = function(file)
     return test_list
 end
 
-local run_gotest_by_name = function(test_name)
-    local dir = vim.fn.expand("%:p:h")
-    local gotest_cmd = string.format("!cd %s && go test %s -test.run=^%s$", dir, ext_opt.test_args, test_name)
-    util.exec(gotest_cmd, true, { title = test_name })
+core.select_test_args_and_run = function(do_run)
+    local opts = util.build_picker_opts()
+    pickers.new(opts, {
+        prompt_title = "go test args list",
+        finder = finders.new_table {
+            results = ext_opt.test_args_list,
+        },
+        theme = ext_opt.theme,
+        sorter = conf.generic_sorter(opts),
+        attach_mappings = function(prompt_bufnr, _)
+            actions.select_default:replace(function()
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                do_run(selection[1])
+            end)
+            return true
+        end
+    }):find()
 end
 
-local run_gotest_by_file = function()
-    local file = vim.fn.expand("%:p")
-    local filename = vim.fn.expand("%:t")
-    local gotest_cmd = string.format("!gott -file=%s %s", file, ext_opt.test_args)
-    util.exec(gotest_cmd, true, { title = string.format("Test all of %s", filename) })
-end
+core.run_gotest_by_name = function(test_name)
+    local do_run = function(test_args)
+        local dir = vim.fn.expand("%:p:h")
+        local gotest_cmd = string.format("!cd %s && go test %s -test.run=^%s$", dir, test_args, test_name)
+        util.exec(gotest_cmd, true, { title = test_name })
+    end
 
-local build_picker_opts = function()
-    local theme_conf = {
-        layout_config = ext_opt.layout_config,
-        previewer = false,
-    }
-    if ext_opt.theme == 'ivy' then
-        return require("telescope.themes").get_ivy(theme_conf)
-    elseif ext_opt.theme == 'cursor' then
-        return require("telescope.themes").get_cursor(theme_conf)
+    if #ext_opt.test_args_list == 0 then
+        do_run(ext_opt.test_args)
     else
-        return require("telescope.themes").get_dropdown(theme_conf)
+        core.select_test_args_and_run(do_run)
+    end
+end
+
+core.run_gotest_by_file = function()
+    local do_run = function(test_args)
+        local file = vim.fn.expand("%:p")
+        local filename = vim.fn.expand("%:t")
+        local gotest_cmd = string.format("!gott -file=%s %s", file, test_args)
+        util.exec(gotest_cmd, true, { title = string.format("Test all of %s", filename) })
+    end
+
+    if #ext_opt.test_args_list == 0 then
+        do_run(ext_opt.test_args)
+    else
+        core.select_test_args_and_run(do_run)
     end
 end
 
@@ -114,12 +155,12 @@ local main = function(opts)
         return
     end
 
-    local go_tests = get_test_list_from_file(current_file_path)
+    local go_tests = core.get_test_list_from_file(current_file_path)
     local test_all = "→ Test All"
 
     go_tests[#go_tests + 1] = test_all
 
-    opts = build_picker_opts()
+    opts = util.build_picker_opts()
     pickers.new(opts, {
         prompt_title = "go test list",
         finder = finders.new_table {
@@ -127,14 +168,14 @@ local main = function(opts)
         },
         theme = "cursor",
         sorter = conf.generic_sorter(opts),
-        attach_mappings = function(prompt_bufnr, map)
+        attach_mappings = function(prompt_bufnr, _)
             actions.select_default:replace(function()
                 actions.close(prompt_bufnr)
                 local selection = action_state.get_selected_entry()
                 if selection[1] == test_all then
-                    run_gotest_by_file()
+                    core.run_gotest_by_file()
                 else
-                    run_gotest_by_name(selection[1])
+                    core.run_gotest_by_name(selection[1])
                 end
             end)
             return true

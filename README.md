@@ -52,6 +52,10 @@ require('telescope').setup {
     extensions = {
         gott = {
             test_args = "-v -vet=off", -- go test args
+            test_args_list = {
+                "-v",
+                '-gcflags=\"all=-l -N\" -v'
+            },                         -- go test args list, if this is empty, use test_args. Otherwise, you'll see another picker to choose args.
             timeout = 3000,            -- try to close go test result notification after 3s.
             keep = function()          -- decide whether to keep the notification after timeout(3s).
                 return false           -- you can use 'return true' to keep the notification window forever.
