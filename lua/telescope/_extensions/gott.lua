@@ -24,6 +24,11 @@ local ext_opt = {
         width = 0.2,
         height = 0.4,
     },
+    display_with_buf = {
+        enabled = false,
+        modifiable = false,
+        height = 20,
+    },
 }
 
 local util = {}
@@ -51,6 +56,16 @@ util.exec = function(cmd, notify, opts)
     end
 
     -- notify exec result
+    -- use buffer
+    if ext_opt.display_with_buf.enabled then
+        local buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, splited)
+        vim.api.nvim_buf_set_option(buf, "modifiable", ext_opt.display_with_buf.modifiable)
+        vim.cmd('botright ' .. ext_opt.display_with_buf.height .. ' split | ' .. buf .. 'buffer')
+        return
+    end
+
+    -- use notify
     local displayed = vim.notify(
         splited,
         vim.log.levels.INFO,

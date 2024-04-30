@@ -66,6 +66,11 @@ require('telescope').setup {
                 width = 0.2,
                 height = 0.4,
             },
+            display_with_buf = {       -- display go test result with buf instead of vim.notify
+                enabled = false,       -- set to true to enable this feature
+                modifiable = false,    -- set to true to make the buf modifiable
+                height = 20,           -- set the buf height
+            },
         },
     }
 }
