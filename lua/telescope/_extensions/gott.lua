@@ -64,10 +64,8 @@ util.exec = function(cmd, notify, opts)
             -- check if exec failed
             if code ~= 0 then
                 vim.schedule(function()
-                    vim.api.nvim_err_writeln(table.concat(result, "\n"))
                     vim.api.nvim_err_writeln(table.concat(j:stderr_result(), "\n"))
                 end)
-                return
             end
 
             -- notify exec result
