@@ -45,41 +45,62 @@ util.exec = function(cmd, notify, opts)
     notify = notify or false
     opts = opts or {}
 
-    -- exec cmd
-    local parsedCmd = vim.api.nvim_parse_cmd(cmd, {})
-    local output = vim.api.nvim_cmd(parsedCmd, { output = true })
-    local splited = util.split(output, "\n")
-    table.remove(splited, 1)
-
     if not notify then
+        local parsedCmd = vim.api.nvim_parse_cmd(cmd, {})
+        local output = vim.api.nvim_cmd(parsedCmd, { output = true })
+        local splited = util.split(output, "\n")
+        table.remove(splited, 1)
         return table.concat(splited, "\n")
     end
 
-    -- notify exec result
-    -- use buffer
-    if ext_opt.display_with_buf.enabled then
-        local buf = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_lines(buf, 0, -1, false, splited)
-        vim.api.nvim_buf_set_option(buf, "modifiable", ext_opt.display_with_buf.modifiable)
-        vim.cmd('botright ' .. ext_opt.display_with_buf.height .. ' split | ' .. buf .. 'buffer')
-        return
-    end
+    -- exec cmd async with plenary
+    require("plenary.job"):new({
+        command = "bash",
+        args = { "-c", cmd },
+        cwd = opts.cwd or vim.fn.getcwd(),
+        on_exit = function(j, code)
+            local result = j:result()
 
-    -- use notify
-    local displayed = vim.notify(
-        splited,
-        vim.log.levels.INFO,
-        {
-            icon = "",
-            title = string.format("gott: %s", opts.title or ""),
-            render = ext_opt.render or "default",
-            timeout = ext_opt.timeout or 3000,
-            keep = ext_opt.keep or function() return false end,
-        }
-    )
-    if not displayed then
-        vim.api.nvim_err_writeln(output)
-    end
+            -- check if exec failed
+            if code ~= 0 then
+                result = j:stderr_result()
+                vim.schedule(function()
+                    vim.api.nvim_err_writeln(table.concat(result, "\n"))
+                end)
+                return
+            end
+
+            -- notify exec result
+            -- use buffer
+            if ext_opt.display_with_buf.enabled then
+                vim.schedule(function()
+                    local buf = vim.api.nvim_create_buf(false, true)
+                    vim.api.nvim_buf_set_lines(buf, 0, -1, false, result)
+                    vim.api.nvim_buf_set_option(buf, "modifiable", ext_opt.display_with_buf.modifiable)
+                    vim.cmd('botright ' .. ext_opt.display_with_buf.height .. ' split | ' .. buf .. 'buffer')
+                end)
+                return
+            end
+
+            -- use notify
+            vim.schedule(function()
+                local displayed = vim.notify(
+                    result,
+                    vim.log.levels.INFO,
+                    {
+                        icon = "",
+                        title = string.format("gott: %s", opts.title or ""),
+                        render = ext_opt.render or "default",
+                        timeout = ext_opt.timeout or 3000,
+                        keep = ext_opt.keep or function() return false end,
+                    }
+                )
+                if not displayed then
+                    vim.api.nvim_err_writeln(table.concat(j:result(), "\n"))
+                end
+            end)
+        end
+    }):start()
 end
 
 util.build_picker_opts = function()
@@ -136,7 +157,7 @@ end
 core.run_gotest_by_name = function(test_name)
     local do_run = function(test_args)
         local dir = vim.fn.expand("%:p:h")
-        local gotest_cmd = string.format("!cd %s && go test %s -test.run=^%s$", dir, test_args, test_name)
+        local gotest_cmd = string.format("cd %s && go test %s -test.run=^%s$", dir, test_args, test_name)
         util.exec(gotest_cmd, true, { title = test_name })
     end
 
@@ -151,7 +172,7 @@ core.run_gotest_by_file = function()
     local do_run = function(test_args)
         local file = vim.fn.expand("%:p")
         local filename = vim.fn.expand("%:t")
-        local gotest_cmd = string.format("!gott -file=%s %s", file, test_args)
+        local gotest_cmd = string.format("gott -file=%s %s", file, test_args)
         util.exec(gotest_cmd, true, { title = string.format("Test all of %s", filename) })
     end
 
