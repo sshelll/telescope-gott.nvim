@@ -63,9 +63,9 @@ util.exec = function(cmd, notify, opts)
 
             -- check if exec failed
             if code ~= 0 then
-                result = j:stderr_result()
                 vim.schedule(function()
                     vim.api.nvim_err_writeln(table.concat(result, "\n"))
+                    vim.api.nvim_err_writeln(table.concat(j:stderr_result(), "\n"))
                 end)
                 return
             end
@@ -172,7 +172,7 @@ core.run_gotest_by_file = function()
     local do_run = function(test_args)
         local file = vim.fn.expand("%:p")
         local filename = vim.fn.expand("%:t")
-        local gotest_cmd = string.format("gott -file=%s %s", file, test_args)
+        local gotest_cmd = string.format('gott -file=%s %s', file, test_args:gsub('"', '\\"'))
         util.exec(gotest_cmd, true, { title = string.format("Test all of %s", filename) })
     end
 
