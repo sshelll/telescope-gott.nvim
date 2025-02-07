@@ -74,7 +74,7 @@ util.exec = function(cmd, notify, opts)
                 vim.schedule(function()
                     local buf = vim.api.nvim_create_buf(false, true)
                     vim.api.nvim_buf_set_lines(buf, 0, -1, false, result)
-                    vim.api.nvim_buf_set_option(buf, "modifiable", ext_opt.display_with_buf.modifiable)
+                    vim.api.nvim_set_option_value("modifiable", ext_opt.display_with_buf.modifiable, { buf = buf })
                     vim.cmd('botright ' .. ext_opt.display_with_buf.height .. ' split | ' .. buf .. 'buffer')
                 end)
                 return
